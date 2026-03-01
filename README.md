@@ -15,6 +15,7 @@ This system combines semantic search with a large language model (LLM) to provid
 - 📊 **Document Indexing**: Automatic chunking and embedding of documents
 - ✅ **Hallucination Testing**: Built-in test suite to verify answer quality
 
+The source file is in root folder
 ## Project Structure
 
 ```
