@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Chat — Swiggy Report RAG{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>💬 Ask Questions</h1>
+    <p class="subtitle">Get answers grounded strictly in uploaded documents</p>
+</div>
+
+<div class="chat-layout">
+    <!-- Main Chat Area -->
+    <div class="chat-main">
+        <!-- Question Input -->
+        <div class="card question-card">
+            <form action="{{ url_for('ask') }}" method="POST" id="question-form">
+                <div class="input-group">
+                    <input
+                        type="text"
+                        name="question"
+                        id="question-input"
+                        placeholder="Ask a question about the uploaded documents..."
+                        class="chat-input"
+                        required
+                        autocomplete="off"
+                    >
+                    <button type="submit" class="btn btn-primary" id="ask-btn">
+                        Ask →
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Latest Answer -->
+        {% if latest %}
+        <div class="card answer-card">
+            <div class="answer-section">
+                <div class="question-display">
+                    <span class="label">❓ Question</span>
+                    <p>{{ latest.question }}</p>
+                </div>
+
+                <div class="answer-display">
+                    <span class="label">💡 Answer</span>
+                    <div class="answer-text">{{ latest.answer }}</div>
+                </div>
+
+                {% if latest.has_sources and latest.sources %}
+                <div class="sources-section">
+                    <span class="label">📚 Sources (Citations)</span>
+                    <div class="sources-list">
+                        {% for source in latest.sources %}
+                        <div class="source-item">
+                            <div class="source-header">
+                                <span class="source-badge">
+                                    📄 {{ source.source }} — Page {{ source.page }}
+                                </span>
+                                <span class="source-score" title="Similarity score (lower = more relevant)">
+                                    Score: {{ source.score }}
+                                </span>
+                            </div>
+                            <div class="source-snippet">
+                                "{{ source.snippet }}"
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Chat History -->
+        {% if history and history|length > 1 %}
+        <div class="card history-card">
+            <div class="history-header">
+                <h3>📜 Conversation History</h3>
+                <form action="{{ url_for('clear_history') }}" method="POST" class="inline-form">
+                    <button type="submit" class="btn btn-sm btn-outline">Clear History</button>
+                </form>
+            </div>
+
+            <div class="history-list">
+                {% for entry in history[:-1]|reverse %}
+                <div class="history-item">
+                    <div class="history-question">
+                        <span class="history-time">{{ entry.timestamp }}</span>
+                        <strong>Q:</strong> {{ entry.question }}
+                    </div>
+                    <div class="history-answer">
+                        <strong>A:</strong> {{ entry.answer[:300] }}{% if entry.answer|length > 300 %}...{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% elif not latest %}
+        <!-- Empty state -->
+        <div class="card empty-state">
+            <div class="empty-icon">🔍</div>
+            <h3>Ask your first question</h3>
+            <p>Type a question above or click one of the example questions to get started.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar: Example Questions -->
+    <div class="chat-sidebar">
+        <div class="card examples-card">
+            <h3>💡 Example Questions</h3>
+            <p class="examples-subtitle">Click to auto-fill</p>
+
+            <div class="examples-list">
+                <button class="example-btn" onclick="fillQuestion(this)">
+                    What is Swiggy's total revenue for the year?
+                </button>
+                <button class="example-btn" onclick="fillQuestion(this)">
+                    What are the key risk factors mentioned in the report?
+                </button>
+                <button class="example-btn" onclick="fillQuestion(this)">
+                    What are the plans for Instamart?
+                </button>
+                <button class="example-btn" onclick="fillQuestion(this)">
+                    Who are the board members or directors?
+                </button>
+                <button class="example-btn" onclick="fillQuestion(this)">
+                    What is the company's net profit or loss?
+                </button>
+                <button class="example-btn" onclick="fillQuestion(this)">
+                    What is mentioned about food delivery growth?
+                </button>
+                <button class="example-btn" onclick="fillQuestion(this)">
+                    What are Swiggy's employee-related expenses?
+                </button>
+            </div>
+        </div>
+
+        <div class="card info-card">
+            <h3>ℹ️ How it works</h3>
+            <ol class="how-it-works">
+                <li>Your question is converted to an embedding</li>
+                <li>Top 4 most relevant chunks are retrieved from the document index</li>
+                <li>An LLM generates an answer using ONLY those chunks</li>
+                <li>Source citations are shown for verification</li>
+            </ol>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-fill question from example buttons
+    function fillQuestion(btn) {
+        const input = document.getElementById('question-input');
+        input.value = btn.textContent.trim();
+        input.focus();
+    }
+
+    // Show loading state on form submit
+    document.getElementById('question-form').addEventListener('submit', function() {
+        const btn = document.getElementById('ask-btn');
+        btn.textContent = '⏳ Thinking...';
+        btn.disabled = true;
+    });
+
+    // Scroll to answer if it exists
+    const answerCard = document.querySelector('.answer-card');
+    if (answerCard) {
+        answerCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+</script>
+{% endblock %}

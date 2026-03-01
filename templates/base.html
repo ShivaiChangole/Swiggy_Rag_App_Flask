@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Swiggy Report RAG{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-brand">
+                <span class="brand-icon">📄</span>
+                <span class="brand-text">Swiggy Report RAG</span>
+            </a>
+            <div class="nav-links">
+                <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                    Upload
+                </a>
+                <a href="{{ url_for('chat') }}" class="nav-link {% if request.endpoint == 'chat' %}active{% endif %}">
+                    Chat
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span class="alert-icon">
+                            {% if category == 'success' %}✅
+                            {% elif category == 'error' %}❌
+                            {% elif category == 'warning' %}⚠️
+                            {% else %}ℹ️{% endif %}
+                        </span>
+                        {{ message }}
+                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>RAG Application — Answers grounded strictly in uploaded documents</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
